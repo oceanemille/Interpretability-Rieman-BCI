@@ -1,0 +1,59 @@
+from .ShapleyValuesEEG import ShapleyValuesEEG, DeepShapleyValuesEEG
+from .ShapleyValuesSPD import ShapleyValuesSPD, DeepShapleyValuesSPD
+
+
+def run_multi_subjects_spd(data, n_splits=10, model_trained = None, classifier = None):
+    """Calcule les valeurs de Shapley SPD pour plusieurs sujets."""
+    results_dic = {}
+    for subject_name, (X, y) in data.items():
+        print(f"Calculating shap_values for {subject_name}...")
+        perm = ShapleyValuesSPD()
+        perm.fit(X, y, n_splits=n_splits, model_trained=model_trained, model=classifier)
+        results_dic[subject_name] = {
+        "shap_values": perm.shap_values_,  
+        "scores": perm.scores_,
+    }
+
+    return results_dic  
+            
+
+def run_multi_subjects_eeg(data, n_splits=10, n_perm=10, pipeline = None, pipeline_pre_trained = None, n_jobs = -1):
+
+    results_dic = {}
+    for subject_name, (X, y) in data.items():
+        print(f"Calculating shap_values for {subject_name}...")
+        perm = ShapleyValuesEEG()
+        perm.fit(X, y, n_splits=n_splits, pipeline=pipeline, pipeline_pretrained=pipeline_pre_trained)
+        results_dic[subject_name] = {
+        "shap_values": perm.shap_values_,  
+        "scores": perm.scores_,
+    }
+
+    return results_dic
+
+
+
+def run_multi_subjects_deep_spd(data, n_splits=10, model_config= None, model = None, model_type = None):
+    """Calcule les valeurs de Shapley SPD profondes pour plusieurs sujets."""
+    results_dic = {}
+    for subject_name, (X, y) in data.items():
+        print(f"Calculating shap_values for {subject_name}...")
+        perm = DeepShapleyValuesSPD()
+        perm.fit(X, y, n_splits=n_splits, model_config=model_config, model_trained=model, model_type=model_type)
+        results_dic[subject_name] = {
+        "shap_values": perm.shap_values_,  
+        "scores": perm.scores_,
+    }
+    return results_dic
+
+def run_multi_subjects_deep_eeg(data, n_splits=10, n_perm=10, model_config= None, model = None, model_type = None, n_jobs = -1):
+    results_dic = {}
+    for subject_name, (X, y) in data.items():
+        print(f"Calculating shap_values for {subject_name}...")
+        perm = DeepShapleyValuesEEG()
+        perm.fit(X, y, n_splits=n_splits, model_config=model_config, model=model, model_type=model_type)
+        results_dic[subject_name] = {
+        "shap_values": perm.shap_values_, 
+        "scores": perm.scores_,
+    }
+    return results_dic
