@@ -67,8 +67,8 @@ def compare_rankings(
     ranking_a = importance_to_ranking(scores_a, channel_names)
     ranking_b = importance_to_ranking(scores_b, channel_names)
     spearman = spearmanr(scores_a, scores_b).statistic
-    kendall_tau,_ = kendalltau(importance_A, importance_B)
-    weighted_kendall_tau,_ = weightedtau(importance_A, importance_B)
+    kendall_tau,_ = kendalltau(scores_a, scores_b)
+    weighted_kendall_tau,_ = weightedtau(scores_a,  scores_b)
 
     return {
         "spearman": float(spearman),
