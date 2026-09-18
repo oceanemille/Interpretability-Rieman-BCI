@@ -53,22 +53,24 @@ def plot_topomap(
             cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
             #cbar.set_label(cbar_title)
 
-            cbar.set_label("") 
             cbar.ax.text(
-                0.5, 1,
+                0.5, 0.98,
                 "Left Hand",
                 ha="center",
-                va="bottom",
+                va="top",
+                fontsize=8,
                 transform=cbar.ax.transAxes
             )
 
             cbar.ax.text(
-                0.5, -0.02,
+                0.5, 0.02,
                 "Right Hand",
                 ha="center",
-                va="top",
+                va="bottom",
+                fontsize=8,
                 transform=cbar.ax.transAxes
             )
+
         else :
             cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.08)
             cbar.set_label(cbar_title)

@@ -830,7 +830,7 @@ def fit(
             score = _classifier_accuracy(
                 fitted_clf, C_test, y_test, selected_device, dtype
             )
-
+                
         values = shapley_values_covariances_parallel(
             C_train,
             C_test,
@@ -843,6 +843,7 @@ def fit(
             linalg_batch_size=linalg_batch_size,
             verbose=verbose,
         )
+
         all_shapley_values.append(values)
         scores.append(score)
 

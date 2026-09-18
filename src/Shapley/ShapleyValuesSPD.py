@@ -38,7 +38,7 @@ def _compute_cov_baseline(C_train, y_train):
 
 
 def reconstruct_shap_samples(mask_2d, current_run_cov, reference_cov):
-    """Reconstruit les matrices de covariance définies par les masques SHAP."""
+    """Reconstruct covariance matrices from SHAP coalition masks."""
     n_simulations, n_channels = mask_2d.shape
     inactive = mask_2d <= 0.5 
 
@@ -55,18 +55,17 @@ def reconstruct_shap_samples(mask_2d, current_run_cov, reference_cov):
 
 
 class ShapleyValuesSPD:
-    """Importance des canaux par valeurs de Shapley (KernelSHAP), calculée
-    directement sur les matrices de covariance (ex : classifieur MDM)."""
+    """KernelSHAP channel attribution computed on covariance matrices."""
 
     def fit(self, X, y, n_splits=10, model=None, model_trained=None,
             baseline=None, n_samples=2000, X_train=None, y_train=None):
-        """Calcule les valeurs de Shapley d'un classifieur sur des covariances."""
+        """Compute Shapley values for a classifier on covariance matrices."""
         X = _as_covariances(X)
         y = np.asarray(y)
 
         if model_trained is not None:
             if n_splits != 10:
-                warnings.warn("`n_splits` est ignoré avec un modèle pré-entraîné.")
+                warnings.warn("`n_splits` is ignored with a pre-trained model.")
 
             if baseline is None:
                 reference_X = X if X_train is None else _as_covariances(X_train)
@@ -88,6 +87,7 @@ class ShapleyValuesSPD:
 
             all_shap_values, all_ratios, all_scores = [], [], []
             for i in range(n_splits):
+                print("Split",i)
                 C_train, C_test, train_y, test_y = train_test_split(
                     X, y, train_size=0.8, stratify=y, random_state=i
                 )
@@ -150,6 +150,7 @@ class ShapleyValuesSPD:
                 stable_predict_frozen, np.zeros((1, n_channels)), seed=run_index
             )
             shap_values = explainer.shap_values(np.ones((1, n_channels)), nsamples=n_samples)
+            shap_values = np.asarray(shap_values).squeeze(axis=0)
 
             all_shap_values.append(shap_values)
             if recorder.ratios:
@@ -195,7 +196,7 @@ class DeepShapleyValuesSPD:
     def fit(self, X, y, n_splits=10, model_trained=None, model_config=None, model_type=None,
             baseline=None, n_samples=2000, epochs=200, lr=1e-3,
             X_train=None, y_train=None):
-        """Calcule les valeurs de Shapley d'un modèle profond sur des covariances."""
+        """Compute Shapley values for a deep model on covariance matrices."""
         X = _as_covariances(X).astype(np.float32, copy=False)
         y = np.asarray(y)
 

@@ -10,10 +10,10 @@ from joblib import Parallel, delayed
 
 
 def _ablate_channel(C, feature):
-    """Met à zéro les termes off-diagonaux du canal `feature`, en gardant
-    sa variance intacte.
+    """Zero a channel's off-diagonal terms while preserving its variance.
 
-    C : ndarray (n_trials, n_channels, n_channels), matrices de covariance.
+    ``C`` contains covariance matrices with shape
+    ``(n_trials, n_channels, n_channels)``.
     """
     C_ablated = C.copy()
     diag = C[:, feature, feature].copy()
@@ -24,30 +24,29 @@ def _ablate_channel(C, feature):
 
 
 class FeaturePermutationSPD:
-    """Importance des canaux par ablation des covariances croisées.
+    """Channel importance based on cross-covariance ablation.
 
-    Pour chaque canal, on met à zéro ses termes off-diagonaux dans les
-    matrices de covariance (en conservant sa variance), et on mesure la
-    chute d'accuracy par rapport à la baseline.
+    For each channel, the off-diagonal entries of the covariance matrices are
+    set to zero while the variance is preserved. Importance is the decrease in
+    accuracy relative to the unmodified baseline.
 
-    IMPORTANT : `X` doit être des matrices de covariance SPD de forme
-    (n_trials, n_channels, n_channels), pas de l'EEG brut. Si vous partez
-    d'EEG brut, appliquez d'abord
-    `pyriemann.estimation.Covariances().fit_transform(X_raw)`.
+    ``X`` must contain SPD covariance matrices with shape
+    ``(n_trials, n_channels, n_channels)``, not raw EEG. Convert raw EEG with
+    ``pyriemann.estimation.Covariances().fit_transform(X_raw)`` first.
 
-    Deux modes via `fit()` :
-    - `model` fourni : classifieur déjà entraîné, `X, y` = données de test.
-      `n_splits` est ignoré.
-    - `classifier` fourni (ou rien, défaut MDM) : `X, y` = dataset complet,
-      split + entraînement répétés `n_splits` fois.
+    Two modes are available through ``fit()``:
+    - With ``model_trained``, ``X`` and ``y`` are test data and ``n_splits``
+      is ignored.
+    - With ``classifier`` or the default MDM classifier, ``X`` and ``y`` are
+      split and fitted repeatedly over ``n_splits`` splits.
     """
 
     def fit(self, X, y, n_splits=10, model_trained=None, classifier=None, n_jobs = -1):
         if model_trained is not None:
             if n_splits != 10:
                 warnings.warn(
-                    "`n_splits` est ignoré quand un modèle pré-entraîné est "
-                    "fourni (pas de split train/test à répéter)."
+                    "`n_splits` is ignored when a pre-trained model is "
+                    "provided because no repeated train/test split is needed."
                 )
             baseline, importance = self._compute_importance(model_trained, X, y)
             self.accuracy_ = np.array([baseline])
@@ -75,7 +74,7 @@ class FeaturePermutationSPD:
         return self._compute_importance(clf, C_test, test_y)
 
     def _compute_importance(self, clf, C_test, y_test):
-        """Baseline + importance par ablation, pour un classifieur entraîné."""
+        """Compute baseline accuracy and ablation importance for a fitted classifier."""
         baseline = np.mean(clf.predict(C_test) == y_test)
 
         n_features = C_test.shape[1]
@@ -89,24 +88,25 @@ class FeaturePermutationSPD:
         return baseline, feature_importance
 
 class DeepFeaturePermutationSPD:
-    """Importance des canaux par ablation, pour un modèle torch (SPDNet).
+    """Channel importance by ablation for a torch model such as SPDNet.
 
-    `X` doit être des matrices de covariance SPD
-    (n_trials, n_channels, n_channels).
+    ``X`` must contain SPD covariance matrices with shape
+    ``(n_trials, n_channels, n_channels)``.
 
-    Deux modes via `fit()` :
-    - `model` fourni : modèle déjà entraîné, `X, y` = TENSORS torch de test
-      (labels déjà encodés 0..n_classes-1). `n_splits` est ignoré.
-    - `model_type` + `model_config` fournis : `X, y` = ndarray numpy
-      (dataset complet), entraînement répété `n_splits` fois.
+    Two modes are available through ``fit()``:
+    - With ``model``, ``X`` and ``y`` are test tensors whose labels are already
+      encoded from 0 to ``n_classes - 1``. ``n_splits`` is ignored.
+    - With ``model_type`` and ``model_config``, ``X`` and ``y`` are NumPy
+      arrays containing the complete dataset and training is repeated over
+      ``n_splits`` splits.
     """
 
     def fit(self, X, y, n_splits=10, model=None, model_config=None, model_type=None, n_jobs = -1):
         if model is not None:
             if n_splits != 10:
                 warnings.warn(
-                    "`n_splits` est ignoré quand un modèle pré-entraîné est "
-                    "fourni (pas de split/entraînement à répéter)."
+                    "`n_splits` is ignored when a pre-trained model is "
+                    "provided because no repeated split or training is needed."
                 )
             baseline, importance = self._compute_importance(model, X, y)
             self.accuracy_ = np.array([baseline])
@@ -115,9 +115,8 @@ class DeepFeaturePermutationSPD:
         else:
             if model_config is None or model_type is None:
                 raise ValueError(
-                    "Fournissez soit `model` (déjà entraîné, X/y en tensors "
-                    "de test), soit `model_type` ET `model_config` "
-                    "(classe du modèle + ses hyperparamètres) pour entraîner."
+                    "Provide either `model` with test tensors, or both "
+                    "`model_type` and `model_config` to train a new model."
                 )
 
             le = LabelEncoder()
@@ -135,7 +134,7 @@ class DeepFeaturePermutationSPD:
         return self
 
     def _compute_importance(self, model, C_test, y_test):
-        """Baseline + importance par ablation, pour un modèle torch entraîné."""
+        """Compute baseline accuracy and ablation importance for a fitted torch model."""
         model.eval()
         with torch.no_grad():
             baseline = (model(C_test).argmax(1) == y_test).float().mean().item()

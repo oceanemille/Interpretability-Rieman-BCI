@@ -18,7 +18,7 @@ np.random.seed(3)
 
 montage = mne.channels.make_standard_montage('standard_1020')
 
-# 2. Récupérer les positions sous forme de dictionnaire {nom: [x, y, z]}
+# 2. Store channel positions as a dictionary: {name: [x, y, z]}.
 positions = montage.get_positions()['ch_pos']
 
 class SPDNetBatchNorm(nn.Module):
@@ -174,6 +174,5 @@ def fit(X, y, meta, model_config, n_iter=2, n_perm=2, method="across_times"):
         }
     
     return results_dic
-
 
 

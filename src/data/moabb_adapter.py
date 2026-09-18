@@ -3,26 +3,26 @@ from moabb.paradigms import FilterBankMotorImagery
 from pyriemann.estimation import Covariances
 
 def load_from_moabb(dataset, covs = False, paradigm=None, sensors=None):
-    """
+    """Load one or more subjects from a MOABB dataset.
+
     Parameters
     ----------
-    dataset : str ou objet MOABB Dataset
-        Si str : doit être une clé de DATASET_CONFIG (datasets pré-configurés
-        avec leurs capteurs). Si objet Dataset MOABB directement : doit être
-        fourni avec `sensors`.
-    sensors : list, optionnel
-        Requis si `dataset` est un objet MOABB (pas dans DATASET_CONFIG).
-    covs : bool, optionnel
-        Si covs est positif, la fonction renvoie les matrices de covariances de chaque trials par sujet
-        Sinon, elle renvoie les données brutes par sujet
+    dataset : str or MOABB Dataset
+        A string must be a key from ``DATASET_CONFIG``. A MOABB dataset object
+        can be supplied directly together with ``sensors``.
+    sensors : list, optional
+        Required when ``dataset`` is not configured in ``DATASET_CONFIG``.
+    covs : bool, optional
+        If ``True``, return one covariance matrix per trial. Otherwise, return
+        raw EEG trials.
     """
     if isinstance(dataset, str):
         if dataset not in DATASET_CONFIG:
             raise ValueError(
-                f"'{dataset}' n'est pas dans DATASET_CONFIG. "
-                f"Datasets disponibles : {list(DATASET_CONFIG.keys())}. "
-                f"Pour utiliser un autre dataset MOABB, passez directement "
-                f"l'objet dataset et la liste des capteurs via `sensors=`."
+                f"'{dataset}' is not in DATASET_CONFIG. "
+                f"Available datasets: {list(DATASET_CONFIG.keys())}. "
+                "To use another MOABB dataset, pass the dataset object "
+                "directly and provide its channel names through `sensors=`."
             )
         cfg = DATASET_CONFIG[dataset]
         dataset_obj = cfg["dataset"]
@@ -31,8 +31,8 @@ def load_from_moabb(dataset, covs = False, paradigm=None, sensors=None):
         dataset_obj = dataset
         if sensors is None:
             raise ValueError(
-                "Vous devez fournir `sensors` quand vous passez un objet "
-                "Dataset MOABB directement (pas dans DATASET_CONFIG)."
+                "Provide `sensors` when passing a MOABB dataset object that "
+                "is not configured in DATASET_CONFIG."
             )
 
     paradigm = paradigm or FilterBankMotorImagery(filters=[[7, 35]], events={"left_hand": 1, "right_hand": 2})

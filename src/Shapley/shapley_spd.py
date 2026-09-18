@@ -28,7 +28,7 @@ class ShapRecorder:
 def stable_predict(mask_2d,n_channels,current_run_signal,reference_signal,clf, deep=False, recorder=None):
     if deep:
         model= clf
-            # mask_2d a une forme (N_simulations, n_channels)
+            # mask_2d has shape (n_simulations, n_channels).
         n_simulations = mask_2d.shape[0]
         X_reconstructed = np.array([current_run_signal for _ in range(n_simulations)])
         
@@ -50,13 +50,13 @@ def stable_predict(mask_2d,n_channels,current_run_signal,reference_signal,clf, d
 
     else : 
 
-        # mask_2d a une forme (N_simulations, n_channels)
+        # mask_2d has shape (n_simulations, n_channels).
         n_simulations = mask_2d.shape[0]
         X_reconstructed = np.array([current_run_signal for _ in range(n_simulations)])
         
         for i in range(n_simulations):
             for ch in range(n_channels):
-                # Si le masque SHAP dit 1, on prend le signal du run actuel
+                # A SHAP mask value of 1 selects the current trial.
                 if mask_2d[i, ch] < 0.5:
                     X_reconstructed[i, ch, :] = reference_signal[ch, :]
                     X_reconstructed[i,:,ch] = reference_signal[:, ch]
@@ -186,6 +186,5 @@ def compute_shapley(X,y, n_splits, clf, deep=False):
             all_ratios.append(ratios)
 
     return all_shap_values, all_scores, all_ratios
-
 
 

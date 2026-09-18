@@ -72,7 +72,7 @@ for sensor in sensors_tries:
         remaining_sensors.remove(member)
         
 
-# Création d'un montage EEG
+# Create the EEG montage.
 montage = mne.channels.make_standard_montage('standard_1020')
 
 info = mne.create_info(
@@ -88,7 +88,7 @@ layout = mne.find_layout(info)
 pos = layout.pos[:, :2]
 names = layout.names
 
-# Groupes de capteurs
+# Channel groups.
 
 groups = [groups[key] for key in groups]
 
@@ -108,7 +108,7 @@ for x, y, name in zip(pos[:, 0], pos[:, 1], names):
             va='top',
             zorder=4)
 
-# Dessin des frontières
+# Draw group boundaries.
 cmap = plt.get_cmap('OrRd')
 scores = [np.mean(feature_permutation[[sensors.index(ch) for ch in group if ch in sensors]]) for group in groups]
 norm = Normalize(vmin=min(scores) if scores else 0, vmax=max(scores) if scores else 1)
@@ -173,7 +173,7 @@ sm.set_array([])
 cbar = fig.colorbar(sm, ax=ax, label='Permutation Score')
 
 
-ax.set_title("Clusters de capteurs EEG")
+ax.set_title("EEG channel clusters")
 ax.set_aspect('equal')
 ax.axis('off')
 plt.savefig("Results/GroupedPermutation/Groups_3/MDM/Dreyer2023C/With_cue/Cluster_Capteurs_bad_sujets.png", dpi=300)

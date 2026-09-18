@@ -2,43 +2,90 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
 
 
-def shap_beeswarm(shap_values, sensor_names, subject,OUT_DIR):
-    # X_diff_power : (n_trials, n_channels)
+def shap_beeswarm(
+    shap_values,
+    sensor_names,
+    subject=None,
+    out_dir=None,
+    title=None,
+    max_channels=None,
+    ax=None,
+    show=True,
+):
+    """Plot trial-level Shapley distributions for each EEG channel.
 
-    n_trials, n_channels = shap_values.shape
-    data = []
-    for ch in range(n_channels):
-        for i in range(n_trials):
-            data.append({
-                "channel": sensor_names[ch],
-                "shap": shap_values[i, ch],
-                #"log_power_diff": X_diff_power[i, ch]
-            })
-    df = pd.DataFrame(data)
+    Parameters
+    ----------
+    shap_values : array-like, shape (n_trials, n_channels)
+    sensor_names : sequence of str, length n_channels
+    max_channels : int or None
+        If set, display only the channels with the largest mean absolute
+        Shapley value.
 
-    
-    plt.figure(figsize=(12, 6))
-    scatter = sns.stripplot(
+    Returns
+    -------
+    fig, ax
+        Matplotlib objects that can be customized by the caller.
+    """
+    shap_values = np.asarray(shap_values)
+    sensor_names = np.asarray(sensor_names)
+    if shap_values.ndim != 2:
+        raise ValueError(
+            "shap_values must have shape (n_trials, n_channels), "
+            f"got {shap_values.shape}."
+        )
+    if sensor_names.ndim != 1 or len(sensor_names) != shap_values.shape[1]:
+        raise ValueError(
+            "sensor_names must be one-dimensional and match n_channels."
+        )
+
+    channel_order = np.argsort(-np.mean(np.abs(shap_values), axis=0))
+    if max_channels is not None:
+        if not 1 <= max_channels <= len(sensor_names):
+            raise ValueError(
+                f"max_channels must be between 1 and {len(sensor_names)}."
+            )
+        channel_order = channel_order[:max_channels]
+
+    selected_names = sensor_names[channel_order]
+    selected_values = shap_values[:, channel_order]
+    df = pd.DataFrame({
+        "channel": np.tile(selected_names, selected_values.shape[0]),
+        "shap": selected_values.reshape(-1),
+    })
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(12, 6))
+    else:
+        fig = ax.get_figure()
+
+    sns.stripplot(
         data=df,
         x="shap",
         y="channel",
-        #hue="log_power_diff",
-        #palette="coolwarm",
+        order=selected_names,
         jitter=0.3,
         alpha=0.7,
-        legend=False
+        ax=ax,
     )
-    
-    # Colorbar
-    #norm = plt.Normalize(df["log_power_diff"].min(), df["log_power_diff"].max())
-    #sm = plt.cm.ScalarMappable(cmap="coolwarm", norm=norm)
-    #plt.colorbar(sm, ax=scatter.axes, label="Log-power vs baseline")
-    
-    plt.axvline(0, color="black", linewidth=1)
-    plt.savefig(f'{OUT_DIR}/Shapley_plot_sujet_{subject}.pdf')
-    plt.show()
+    ax.axvline(0, color="black", linewidth=1)
+    ax.set_xlabel("Shapley value for class left_hand")
+    ax.set_ylabel("Channel")
+    ax.set_title(title or f"Trial-level Shapley values{f' — {subject}' if subject else ''}")
+    fig.tight_layout()
+
+    if out_dir is not None:
+        output_dir = Path(out_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        suffix = f"_{subject}" if subject is not None else ""
+        fig.savefig(output_dir / f"shapley_beeswarm{suffix}.pdf", dpi=300)
+    if show:
+        plt.show()
+    return fig, ax
 
 def filter_regions(regions, sensor_names):
     sensor_set = set(sensor_names)

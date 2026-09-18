@@ -1,16 +1,15 @@
 from .FeaturePermutationEEG import FeaturePermutationEEG, DeepFeaturePermutationEEG
 from .FeaturePermutationSPD import FeaturePermutationSPD, DeepFeaturePermutationSPD
-import torch 
 
-def run_multi_subjects_spd(data: dict, n_splits=10, n_perm=10, model_trained = None, classifier = None, n_jobs = -1):
+def compute_pfi_spd_for_subjects(data: dict, n_splits=10, n_perm=10, model_trained = None, classifier = None, n_jobs = -1):
     """
-    Calcule l'importance sur plusieurs sujets
+    Compute importance for multiple subjects
 
     ParametersParallel(n_jobs=n_jobs)
     ----------
     data : dict {subject_name: (X, y)}
-        Typiquement obtenu via `load_from_moabb(...)`, mais peut être
-        construit à la main si vous avez plusieurs sujets/sessions.
+        Typically returned by ``load_from_moabb(...)``. It can also be built
+        manually when several subjects or sessions are available.
     """
     results_dic = {}
     for subject_name, (X, y) in data.items():
@@ -25,13 +24,13 @@ def run_multi_subjects_spd(data: dict, n_splits=10, n_perm=10, model_trained = N
     return results_dic  
             
 
-def run_multi_subjects_eeg(data: dict, n_splits=10, n_perm=10, pipeline = None, pipeline_pre_trained = None, n_jobs = -1):
+def compute_pfi_eeg_for_subjects(data: dict, n_splits=10, n_perm=10, pipeline = None, pipeline_pretrained = None, n_jobs = -1):
 
     results_dic = {}
     for subject_name, (X, y) in data.items():
         print(f"Calculating importance for {subject_name}...")
         perm = FeaturePermutationEEG()
-        perm.fit(X, y, n_splits=n_splits, n_perm=n_perm, pipeline=pipeline, pipeline_pre_trained = pipeline_pre_trained, n_jobs = n_jobs)
+        perm.fit(X, y, n_splits=n_splits, n_perm=n_perm, pipeline=pipeline, pipeline_pretrained = pipeline_pretrained, n_jobs = n_jobs)
         results_dic[subject_name] = {
         "importance": perm.importance_,  
         "accuracy": perm.accuracy_,
@@ -41,15 +40,15 @@ def run_multi_subjects_eeg(data: dict, n_splits=10, n_perm=10, pipeline = None, 
 
 
 
-def run_multi_subjects_deep_spd(data: dict, n_splits=10, model_config= None, model = None, model_type = None, n_jobs = -1):
+def compute_deep_pfi_spd_for_subjects(data: dict, n_splits=10, model_config= None, model = None, model_type = None, n_jobs = -1):
     """
-    Calcule l'importance sur plusieurs sujets
+    Compute importance for multiple subjects
 
     Parameters
     ----------
     data : dict {subject_name: (X, y)}
-        Typiquement obtenu via `load_from_moabb(...)`, mais peut être
-        construit à la main si vous avez plusieurs sujets/sessions.
+        Typically returned by ``load_from_moabb(...)``. It can also be built
+        manually when several subjects or sessions are available.
     """
     results_dic = {}
     for subject_name, (X, y) in data.items():
@@ -62,7 +61,7 @@ def run_multi_subjects_deep_spd(data: dict, n_splits=10, model_config= None, mod
     }
     return results_dic
 
-def run_multi_subjects_deep_eeg(data: dict, n_splits=10, n_perm=10, model_config= None, model = None, model_type = None, n_jobs = -1):
+def compute_deep_pfi_eeg_for_subjects(data: dict, n_splits=10, n_perm=10, model_config= None, model = None, model_type = None, n_jobs = -1):
     results_dic = {}
     for subject_name, (X, y) in data.items():
         print(f"Calculating importance for {subject_name}...")
@@ -73,3 +72,10 @@ def run_multi_subjects_deep_eeg(data: dict, n_splits=10, n_perm=10, model_config
         "accuracy": perm.accuracy_,
     }
     return results_dic
+
+
+# Backward-compatible aliases for existing scripts.
+run_multi_subjects_spd = compute_pfi_spd_for_subjects
+run_multi_subjects_eeg = compute_pfi_eeg_for_subjects
+run_multi_subjects_deep_spd = compute_deep_pfi_spd_for_subjects
+run_multi_subjects_deep_eeg = compute_deep_pfi_eeg_for_subjects

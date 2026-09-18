@@ -147,17 +147,17 @@ for subject in range (len(files_alpha_1_covs_0)):
     features_less_than_5_percentage.append(np.sum(number_of_features <= 5) / (10 * len(files_alpha_1_covs_0[subject][0])) * 100)
 
     print("Number of nan : ", number_of_nan)
-    print("Moyenne", np.mean(number_of_features))
-    print("Médiane", np.median(number_of_features))
-    print("Nombre de features >= 18", np.sum(number_of_features >= 18))
-    print("Nombre de features <= 5", np.sum(number_of_features <=5))
-    print("Pourcentage de nan : ", nan_percentage[-1])
-    print("Pourcentage de features >= 18 : ", features_greater_than_18_percentage[-1])
-    print("Pourcentage de features <= 5 : ", features_less_than_5_percentage[-1])
+    print("Mean", np.mean(number_of_features))
+    print("Median", np.median(number_of_features))
+    print("Number of features >= 18", np.sum(number_of_features >= 18))
+    print("Number of features <= 5", np.sum(number_of_features <=5))
+    print("Percentage of NaN values: ", nan_percentage[-1])
+    print("Percentage of feature counts >= 18: ", features_greater_than_18_percentage[-1])
+    print("Percentage of feature counts <= 5: ", features_less_than_5_percentage[-1])
 
-print("Pourcentage de nan : ", np.mean(nan_percentage))
-print("Pourcentage de features >= 18 : ", np.mean(features_greater_than_18_percentage))
-print("Pourcentage de features <= 5 : ", np.mean(features_less_than_5_percentage))
+print("Percentage of NaN values: ", np.mean(nan_percentage))
+print("Percentage of feature counts >= 18: ", np.mean(features_greater_than_18_percentage))
+print("Percentage of feature counts <= 5: ", np.mean(features_less_than_5_percentage))
 
 
 with open(f"{OUT_DIR}/results_per_subject_opposite_variance_opposite.pkl", "rb") as f:
@@ -195,17 +195,17 @@ for subject in range (len(files)):
     features_less_than_5_percentage.append(np.sum(number_of_features <= 5) / (10 * len(files[subject][0])) * 100)
 
     print("Number of nan : ", number_of_nan)
-    print("Moyenne", np.mean(number_of_features))
-    print("Médiane", np.median(number_of_features))
-    print("Nombre de features >= 18", np.sum(number_of_features >= 18))
-    print("Nombre de features <= 5", np.sum(number_of_features <=5))
-    print("Pourcentage de nan : ", nan_percentage[-1])
-    print("Pourcentage de features >= 18 : ", features_greater_than_18_percentage[-1])
-    print("Pourcentage de features <= 5 : ", features_less_than_5_percentage[-1])
+    print("Mean", np.mean(number_of_features))
+    print("Median", np.median(number_of_features))
+    print("Number of features >= 18", np.sum(number_of_features >= 18))
+    print("Number of features <= 5", np.sum(number_of_features <=5))
+    print("Percentage of NaN values: ", nan_percentage[-1])
+    print("Percentage of feature counts >= 18: ", features_greater_than_18_percentage[-1])
+    print("Percentage of feature counts <= 5: ", features_less_than_5_percentage[-1])
 
-print("Pourcentage de nan : ", np.mean(nan_percentage))
-print("Pourcentage de features >= 18 : ", np.mean(features_greater_than_18_percentage))
-print("Pourcentage de features <= 5 : ", np.mean(features_less_than_5_percentage))
+print("Percentage of NaN values: ", np.mean(nan_percentage))
+print("Percentage of feature counts >= 18: ", np.mean(features_greater_than_18_percentage))
+print("Percentage of feature counts <= 5: ", np.mean(features_less_than_5_percentage))
 
 
 with open(f"{OUT_DIR}/results_per_subject_variance_covariance.pkl", "rb") as f:

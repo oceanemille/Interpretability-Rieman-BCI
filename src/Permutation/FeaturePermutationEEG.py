@@ -12,25 +12,26 @@ from joblib import Parallel, delayed
 
 
 class FeaturePermutationEEG:
-    """Importance des features par permutation, pour un classifieur pyriemann.
-    Deux modes via `fit()` :
-    - `model` fourni : classifieur pyriemann déjà entraîné. `X, y` sont les
-      données de TEST (EEG brut, ndarray de forme (n_trials, n_channels,
-      n_times)). `n_splits` est ignoré.
-    - `classifier` fourni (ou rien, défaut MDM) : `X, y` = dataset complet.
-      Split + entraînement répétés `n_splits` fois avec des seeds différentes.
+    """Permutation feature importance for a pyRiemann classifier.
+
+    Two modes are available through ``fit()``:
+    - With ``pipeline_pretrained``, ``X`` and ``y`` are raw EEG test data with
+      shape ``(n_trials, n_channels, n_times)`` and their labels.
+      ``n_splits`` is ignored.
+    - With ``pipeline``, ``X`` and ``y`` contain the complete dataset. The
+      pipeline is trained and evaluated on ``n_splits`` reproducible splits.
     """
 
     def fit(self, X, y, n_splits=10, n_perm=10,
-            pipeline=None, pipeline_pre_trained=None, n_jobs = -1):
-        if pipeline_pre_trained is not None:
+            pipeline=None, pipeline_pretrained=None, n_jobs = -1):
+        if pipeline_pretrained is not None:
             if n_splits != 10:
                 warnings.warn(
-                    "`n_splits` est ignoré quand une pipeline pré-entraînée est "
-                    "fournie (pas de split train/test à répéter)."
+                    "`n_splits` is ignored when a pre-trained pipeline is "
+                    "provided because no repeated train/test split is needed."
                 )
             baseline, importance = self._compute_importance(
-                pipeline_pre_trained, X, y, n_perm=n_perm
+                pipeline_pretrained, X, y, n_perm=n_perm
             )
             self.accuracy_ = np.array([baseline])
             self.importance_ = np.array([importance])
@@ -60,7 +61,7 @@ class FeaturePermutationEEG:
 
     def _compute_importance(self, pipeline, X_test, y_test,
                              n_perm, seed=None):
-        """Cœur partagé : baseline + importance pour un classifieur entraîné."""
+        """Compute baseline accuracy and importance for a fitted classifier."""
         baseline = np.mean(pipeline.predict(X_test) == y_test)
 
         n_features = X_test.shape[1]
@@ -103,17 +104,17 @@ class FeaturePermutationEEG:
 
 
 class DeepFeaturePermutationEEG:
-    """Importance des features par permutation, pour un modèle torch (SPDNet).
+    """Permutation feature importance for a torch model such as SPDNet.
 
-    Deux modes via `fit()` :
-    - `model` fourni : modèle déjà entraîné. `X, y` doivent être des TENSORS
-      torch (données de test, labels déjà encodés en entiers 0..n_classes-1).
-      `n_splits` est ignoré.
-    - `model_config` + `model_type` fournis : `X, y` sont des ndarray numpy
-      (dataset complet, labels bruts — encodés automatiquement).
-      Entraînement répété `n_splits` fois.
+    Two modes are available through ``fit()``:
+    - With ``model``, ``X`` and ``y`` must be test tensors. Labels must already
+      be encoded as integers from 0 to ``n_classes - 1``. ``n_splits`` is
+      ignored.
+    - With ``model_config`` and ``model_type``, ``X`` and ``y`` are NumPy
+      arrays containing the complete dataset. Labels are encoded automatically
+      and training is repeated over ``n_splits`` splits.
 
-    Note : seule la méthode "across_times" est implémentée pour l'instant.
+    Only channel-wise permutation across time samples is currently supported.
     """
 
     def fit(self, X, y, n_splits=10, n_perm=10, seed=None,
@@ -122,8 +123,8 @@ class DeepFeaturePermutationEEG:
         if model is not None:
             if n_splits != 10:
                 warnings.warn(
-                    "`n_splits` est ignoré quand un modèle pré-entraîné est "
-                    "fourni (pas de split/entraînement à répéter)."
+                    "`n_splits` is ignored when a pre-trained model is "
+                    "provided because no repeated split or training is needed."
                 )
             baseline, importance = self._compute_importance(
                 model, X, y, n_perm=n_perm, seed=seed
@@ -134,9 +135,8 @@ class DeepFeaturePermutationEEG:
         else:
             if model_config is None or model_type is None:
                 raise ValueError(
-                    "Fournissez soit `model` (déjà entraîné, X/y en tensors "
-                    "de test), soit `model_type` ET `model_config` "
-                    "(classe du modèle + ses hyperparamètres) pour entraîner."
+                    "Provide either `model` with test tensors, or both "
+                    "`model_type` and `model_config` to train a new model."
                 )
 
             le = LabelEncoder()
@@ -154,7 +154,7 @@ class DeepFeaturePermutationEEG:
         return self
 
     def _compute_importance(self, model, X_test, y_test, n_perm, seed=None):
-        """Cœur partagé : baseline + importance pour un modèle en mémoire."""
+        """Compute baseline accuracy and importance for an in-memory model."""
         rng = np.random.default_rng(seed)
         model.eval()
         with torch.no_grad():
@@ -178,7 +178,7 @@ class DeepFeaturePermutationEEG:
 
     def _train_and_compute_importance(self, X_data, y_data, model_config,
                                        model_type, n_perm, seed=None):
-        """Entraîne un modèle puis calcule l'importance (wrapper de confort)."""
+        """Train a model and compute its permutation importance."""
 
         if seed is not None:
             torch.manual_seed(seed)

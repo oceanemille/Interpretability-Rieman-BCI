@@ -1,6 +1,6 @@
 from .ExactShapleyValues import fit
 
-def run_multi_subjects_spd(
+def compute_exact_shapley_for_subjects(
     data,
     clf=None,
     n_splits=10,
@@ -24,7 +24,9 @@ def run_multi_subjects_spd(
         "accuracy": scores,
     }
 
-    return results_dic  
+    return results_dic
+
+
+# Backward-compatible alias for existing scripts.
+run_multi_subjects_spd = compute_exact_shapley_for_subjects
             
-
-

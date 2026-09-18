@@ -13,7 +13,7 @@ from pyriemann.utils.distance import distance_riemann
 
 
 def reconstruct_shap_samples(mask_2d, current_run_signal, reference_signal):
-    """Reconstruit les signaux EEG définis par les masques SHAP."""
+    """Reconstruct EEG signals from SHAP coalition masks."""
     n_simulations, n_channels = mask_2d.shape
     active = mask_2d > 0.5
 
@@ -39,14 +39,13 @@ class ShapRecorder:
 
 
 class ShapleyValuesEEG:
-    """Importance des canaux par valeurs de Shapley (KernelSHAP), pour une
-    pipeline pyriemann/sklearn (ex: Covariances + MDM)."""
+    """KernelSHAP channel attribution for a pyRiemann/sklearn pipeline."""
 
     def fit(self, X, y, n_splits=10, pipeline=None, pipeline_pretrained=None, baseline=None, n_samples=1000):
-        """Calcule les valeurs de Shapley d'une pipeline sur des signaux EEG."""
+        """Compute Shapley values for a pipeline operating on EEG signals."""
         if pipeline_pretrained is not None:
             if n_splits != 10:
-                warnings.warn("`n_splits` est ignoré avec un modèle pré-entraîné.")
+                warnings.warn("`n_splits` is ignored with a pre-trained pipeline.")
             baseline_signal = baseline if baseline is not None else self._compute_noise_baseline(X, y)
             shap_values, ratios = self.KernelShap(X, pipeline_pretrained, baseline_signal, n_samples)
             score = np.mean(pipeline_pretrained.predict(X) == y)
@@ -56,7 +55,9 @@ class ShapleyValuesEEG:
 
         else:
             if pipeline is None:
-                raise ValueError("Fournissez soit `pipeline_pre_trained` (déjà entraîné), soit `pipeline` (à entraîner).")
+                raise ValueError(
+                    "Provide either `pipeline_pretrained` or a `pipeline` to train."
+                )
 
             all_shap_values, all_ratios, all_scores = [], [], []
             for i in range(n_splits):
@@ -96,8 +97,7 @@ class ShapleyValuesEEG:
         return predictions
 
     def _compute_noise_baseline(self, X_train, y_train):
-        """Baseline = signal moyen + bruit dont la variance vient des
-        covariances moyennes par classe (générique, pas limité à 2 classes)."""
+        """Build a mean-signal baseline with class-balanced covariance noise."""
         covariance = Covariances()
         covs = covariance.transform(X_train)
         classes = np.unique(y_train)
@@ -140,8 +140,7 @@ class ShapleyValuesEEG:
 
 
 class DeepShapleyValuesEEG:
-    """Importance des canaux par valeurs de Shapley (KernelSHAP), pour un
-    modèle torch (SPDNet)."""
+    """KernelSHAP channel attribution for a torch model such as SPDNet."""
 
     def train_model(self, model, X_train, y_train, X_test, y_test,
                      epochs=200, lr=1e-3, verbose=True):
@@ -203,7 +202,7 @@ class DeepShapleyValuesEEG:
 
         if model is not None:
             if n_splits != 10:
-                warnings.warn("`n_splits` est ignoré avec un modèle pré-entraîné.")
+                warnings.warn("`n_splits` is ignored with a pre-trained model.")
             X_numpy = X.detach().cpu().numpy() if torch.is_tensor(X) else np.asarray(X)
             y_numpy = y.detach().cpu().numpy() if torch.is_tensor(y) else np.asarray(y)
             X_tensor = torch.from_numpy(X_numpy).to(torch.float32)
@@ -224,7 +223,10 @@ class DeepShapleyValuesEEG:
 
         else:
             if model_config is None or model_type is None:
-                raise ValueError("Fournissez `model`, ou `model_type` + `model_config` pour entraîner.")
+                raise ValueError(
+                    "Provide `model`, or both `model_type` and `model_config` "
+                    "to train a new model."
+                )
 
             le = LabelEncoder()
             y_encoded = le.fit_transform(y)
